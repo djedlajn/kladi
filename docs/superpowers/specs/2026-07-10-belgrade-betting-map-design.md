@@ -33,7 +33,7 @@ This is more than sufficient for a truthful, striking visualization. Official re
 - `public/data/betting.geojson` — Point features; properties: `id`, `name` (fallback: brand, then generic "Kladionica"/"Kazino"/"Slot klub"), `kind` (`bookmaker` | `casino` | `slots`), `brand?`, `address?`
 - `public/data/schools.geojson` — Point features; properties: `id`, `name` (fallback "Škola"/"Vrtić"), `kind` (`school` | `kindergarten`), `address?`
 
-Committing the data makes the app self-contained and reproducible and respects Overpass etiquette (no per-visitor queries). The script is re-runnable to refresh; it retries once on failure and falls back to the kumi.systems mirror (the main endpoint intermittently throttles — observed during research).
+Committing the data makes the app self-contained and reproducible and respects Overpass etiquette (no per-visitor queries). The script is re-runnable to refresh; it retries once on failure and falls back through public mirrors (kumi.systems, maps.mail.ru) — the main endpoint IP-throttles aggressively, observed during research.
 
 **Derived data (computed in the browser at load, not in the pipeline):** for each school, distance to nearest betting venue and the sorted list of venues within 1000 m. At ~500 schools × ~380 venues this is ~190k haversine evaluations — a few milliseconds; no spatial index needed. Keeping it in the client means the radius slider works on live data with no precomputation coupling.
 

@@ -708,6 +708,7 @@ const BBOX = '44.70,20.25,44.90,20.65'
 const ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ]
 
 const QUERIES = {
@@ -735,6 +736,7 @@ async function overpass(query) {
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
+        headers: { 'User-Agent': 'kladi-belgrade-betting-map/0.1 (one-off data refresh)' },
         body: new URLSearchParams({ data: query }),
       })
       if (!res.ok) throw new Error(`${endpoint} → HTTP ${res.status}`)
