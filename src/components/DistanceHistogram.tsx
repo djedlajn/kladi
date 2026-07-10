@@ -114,7 +114,7 @@ export default function DistanceHistogram({ distances, radiusM }: Props) {
       </svg>
       <div className="histogram-tooltip" aria-live="polite">
         {hover
-          ? `${hover.overflow ? '≥ 1000 m' : `${hover.x0}–${hover.x1} m`}: ${hover.count}`
+          ? `${hover.overflow ? STRINGS.overflowBinLabel : `${hover.x0}–${hover.x1} m`}: ${hover.count}`
           : ' '}
       </div>
     </div>

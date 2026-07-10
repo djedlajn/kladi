@@ -62,6 +62,7 @@ function buffersFC(venues: Venue[], radiusM: number): GeoJSON.FeatureCollection 
 export default function MapView({ venues, distances, radiusM }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const popupRef = useRef<maplibregl.Popup | null>(null)
   const loadedRef = useRef(false)
   // latest data for the load handler (props may change before style loads)
   const dataRef = useRef({ venues, distances, radiusM })
@@ -133,20 +134,10 @@ export default function MapView({ venues, distances, radiusM }: MapViewProps) {
       })
 
       const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+      popupRef.current = popup
 
-      map.on('click', 'venues-circles', (e) => {
-        const f = e.features?.[0]
-        if (!f) return
-        const p = f.properties as { name: string; kind: keyof typeof KIND_LABELS; address: string }
-        popup
-          .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
-          .setHTML(
-            `<strong>${esc(p.name)}</strong><br/><span class="popup-kind">${KIND_LABELS[p.kind]}</span>` +
-              (p.address ? `<br/><span class="popup-addr">${esc(p.address)}</span>` : ''),
-          )
-          .addTo(map)
-      })
-
+      // schools handler registered first so the venues handler (rendered on top)
+      // wins when a click hits both, matching the visual stacking order
       map.on('click', 'schools-circles', (e) => {
         const f = e.features?.[0]
         if (!f) return
@@ -162,6 +153,19 @@ export default function MapView({ venues, distances, radiusM }: MapViewProps) {
           .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
           .setHTML(
             `<strong>${esc(p.name)}</strong><br/><span class="popup-kind">${KIND_LABELS[p.kind]}</span>${nearby}`,
+          )
+          .addTo(map)
+      })
+
+      map.on('click', 'venues-circles', (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const p = f.properties as { name: string; kind: keyof typeof KIND_LABELS; address: string }
+        popup
+          .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
+          .setHTML(
+            `<strong>${esc(p.name)}</strong><br/><span class="popup-kind">${KIND_LABELS[p.kind]}</span>` +
+              (p.address ? `<br/><span class="popup-addr">${esc(p.address)}</span>` : ''),
           )
           .addTo(map)
       })
@@ -184,6 +188,8 @@ export default function MapView({ venues, distances, radiusM }: MapViewProps) {
   useEffect(() => {
     const map = mapRef.current
     if (!map || !loadedRef.current) return
+    // close any open popup: its target feature may no longer exist after the data change
+    popupRef.current?.remove()
     ;(map.getSource('venues') as maplibregl.GeoJSONSource)?.setData(venuesFC(venues))
     ;(map.getSource('schools') as maplibregl.GeoJSONSource)?.setData(schoolsFC(distances, radiusM))
     ;(map.getSource('buffers') as maplibregl.GeoJSONSource)?.setData(buffersFC(venues, radiusM))

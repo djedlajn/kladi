@@ -4,6 +4,8 @@ export type VenueKind = 'bookmaker' | 'casino' | 'slots'
 export type SchoolKind = 'school' | 'kindergarten'
 export type Kind = VenueKind | SchoolKind
 
+export const ALL_KINDS: Kind[] = ['bookmaker', 'casino', 'slots', 'school', 'kindergarten']
+
 export interface Venue {
   id: string
   name: string
@@ -38,7 +40,7 @@ export interface ExposureSummary {
 export function computeSchoolDistances(
   schools: School[],
   venues: Venue[],
-  nearbyCutoffM = 1500,
+  nearbyCutoffM = 1000,
 ): SchoolDistance[] {
   return schools.map((school) => {
     const nearby: { venue: Venue; distanceM: number }[] = []

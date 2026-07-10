@@ -3,10 +3,8 @@ import MapView from './components/MapView'
 import Sidebar from './components/Sidebar'
 import { loadData } from './lib/data'
 import type { Kind, School, Venue } from './lib/exposure'
-import { computeSchoolDistances, summarizeExposure } from './lib/exposure'
+import { ALL_KINDS, computeSchoolDistances, summarizeExposure } from './lib/exposure'
 import { LEGAL_MIN_M, STRINGS } from './lib/strings'
-
-const ALL_KINDS: Kind[] = ['bookmaker', 'casino', 'slots', 'school', 'kindergarten']
 
 function hasWebgl(): boolean {
   try {

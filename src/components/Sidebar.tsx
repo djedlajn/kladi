@@ -1,4 +1,5 @@
 import type { ExposureSummary, Kind, SchoolDistance } from '../lib/exposure'
+import { ALL_KINDS } from '../lib/exposure'
 import { KIND_COLORS, KIND_LABELS, LAW_URL, LEGAL_MIN_M, STRINGS } from '../lib/strings'
 import DistanceHistogram from './DistanceHistogram'
 
@@ -11,8 +12,6 @@ export interface SidebarProps {
   visibleKinds: Set<Kind>
   onToggleKind: (kind: Kind) => void
 }
-
-const ALL_KINDS: Kind[] = ['bookmaker', 'casino', 'slots', 'school', 'kindergarten']
 
 const fmtMedian = (m: number) =>
   Number.isFinite(m) ? `${Math.round(m)} m` : '—'
