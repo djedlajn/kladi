@@ -18,7 +18,9 @@ v0.1 proved the concept; v0.2 makes it usable and shareable. Three gaps close: t
 
 ## What does NOT change
 
-Data pipeline and GeoJSON files; `exposure.ts` model; palette hexes and dataviz rules; map style/defaults; test stack. The v0.1 sidebar components (`Sidebar.tsx`) are dismantled, not preserved.
+Data pipeline and GeoJSON files; `exposure.ts` model; dataviz rules; test stack. The v0.1 sidebar components (`Sidebar.tsx`) are dismantled, not preserved.
+
+**New runtime dependencies (the only two):** `lucide-react` (icons), `react-intl` (i18n). The dark palette hexes stay; a light-mode palette joins them (see Theming).
 
 ## Layout: the HUD (per approved mockup)
 
@@ -56,17 +58,31 @@ Hash-based, no router: `#r=200&l=bkm,sch&c=20.457,44.810,12&s=node/123&lang=sr`.
 - On load: parse once; any hash present skips intro. On change: `history.replaceState` debounced 300ms (camera updates come from MapView `moveend`).
 - Share: `navigator.clipboard.writeText(location.href)`; on rejection, toast shows the URL text for manual copy. Toast: 2s, bottom-center.
 
-## i18n
+## i18n (react-intl)
 
-`src/lib/i18n.ts`: `const DICT = { sr: {...}, en: {...} }` — same key shape as v0.1 `STRINGS` (functions stay functions), plus new keys for v0.2 UI. `KIND_LABELS` localized inside DICT. `useLang()` hook: `lang`, `setLang`, `t` (the active dictionary); order of precedence: URL param > localStorage `kladi:lang` > default `sr`. Toggle chip top-right. `strings.ts` shrinks to non-linguistic constants (`LEGAL_MIN_M`, `LAW_URL`, `KIND_COLORS`) — components must import copy only via `useLang().t`. `<html lang>` attribute follows. All v0.1 English copy gets a Serbian translation written at plan time (ekavica, standard orthography).
+Translations live in **flat JSON message files the user edits by hand**: `src/locales/sr.json` and `src/locales/en.json` — ICU message syntax, ids namespaced by component (`title.heading`, `dock.radiusLabel`, `detail.verdictExposed`, `kind.bookmaker`, …). `<IntlProvider locale={lang} messages={MESSAGES[lang]}>` wraps App; components use `useIntl()`/`<FormattedMessage>` only — no hard-coded copy. Parameterized strings use ICU arguments (`{radius}`) and **plurals use ICU plural rules** so Serbian declension is correct: `{count, plural, one {# kladionica} few {# kladionice} other {# kladionica}}`. Locale precedence: URL param > localStorage `kladi:lang` > default `sr`; a thin `useLang()` hook owns persistence and sets `<html lang>`. `strings.ts` shrinks to non-linguistic constants (`LEGAL_MIN_M`, `LAW_URL`; colors move to `theme.ts`). Initial `sr` translations (ekavica) written at plan time; the JSON format means later manual edits need no code changes. A test asserts sr↔en message-id parity by importing both JSON files.
+
+## Theming (system-aware light/dark) & icons
+
+The app follows `prefers-color-scheme` — no manual theme toggle. Two mechanisms:
+
+- **CSS tokens:** dark values stay the `:root` default; a `@media (prefers-color-scheme: light)` block overrides them. Light values (from the validated reference palette): page `#f9f9f7`, panel glass `rgba(252,252,251,.88)`, ink `#0b0b0b`, secondary `#52514e`, muted `#898781`, grid `#e1e0d9`, baseline `#c3c2b7`, border `rgba(11,11,11,.10)`. The histogram/SVG strokes switch from inline hexes to CSS vars (closes a deferred v0.1 finding).
+- **JS theme constants** (`src/lib/theme.ts`): MapLibre paint and basemap can't read CSS vars, so `THEME = { dark: {...}, light: {...} }` exports per-scheme `KIND_COLORS`, buffer color/opacities, and basemap style URL (`…/styles/dark` ↔ `…/styles/positron`). A `useColorScheme()` hook (matchMedia + change listener) drives both React and MapView; on scheme change MapView calls `map.setStyle(url)` and re-adds sources/layers on the subsequent `style.load` (layer-adding is factored into a reusable function for this).
+
+**Light categorical palette** (validated with the dataviz six-checks script on `#fcfcfb`: all pass; magenta/aqua sit below 3:1 contrast — relief provided by dot strokes + always-visible labeled legend): bookmaker `#e34948`, casino `#eb6834`, slots `#e87ba4`, school `#2a78d6`, kindergarten `#1baf7a`. Dark palette unchanged from v0.1.
+
+**Icons:** `lucide-react`, replacing all emoji/typographic glyphs. Set: `Search` (search box), `X` (close), `Share2` (share link), `RotateCcw` (replay intro), `Info` (about / dock hint), `TriangleAlert` / `ShieldCheck` (detail verdict chips), `Languages` (SR/EN chip), `ChevronUp`/`ChevronDown` (mobile sheet). 16–18px, `stroke-width: 2`, colored via `currentColor`.
 
 ## Architecture
 
 ```
 src/lib/search.ts        searchSchools + normalizeName (tested)
 src/lib/urlState.ts      parseHash/buildHash (tested)
-src/lib/i18n.ts          DICT sr/en, useLang (fallback tested)
-src/lib/strings.ts       shrinks to constants (colors, law)
+src/lib/theme.ts         THEME.dark/.light (kind colors, buffer paint, basemap URL) + useColorScheme
+src/lib/lang.ts          useLang (locale precedence + persistence + <html lang>)
+src/locales/sr.json      ICU messages — hand-editable
+src/locales/en.json      ICU messages — hand-editable
+src/lib/strings.ts       shrinks to constants (LEGAL_MIN_M, LAW_URL)
 src/components/
   MapView.tsx            + props: selectedSchoolId, hoveredVenueId, introPhase,
                            onSelectSchool(id|null), onCameraChange(c); feature-states, flyTo
@@ -85,7 +101,7 @@ Clipboard rejection → manual-copy toast. Malformed hash → defaults (never cr
 
 ## Testing
 
-Vitest: `search.ts` (diacritics incl. đ/dj, ranking order, cap, short-query), `urlState.ts` (roundtrip, partial/garbage input), `i18n.ts` (key parity sr↔en asserted programmatically, fallback chain). Existing 20 tests stay green (histogram/exposure logic untouched). Browser E2E checklist re-run at the end (search flow, selection panel, intro, URL roundtrip, lang toggle, mobile viewport).
+Vitest: `search.ts` (diacritics incl. đ/dj, ranking order, cap, short-query), `urlState.ts` (roundtrip, partial/garbage input), locales (sr↔en message-id parity by importing both JSON files; ICU plural strings parse via `intl-messageformat`). Existing 20 tests stay green (histogram/exposure logic untouched). Browser E2E checklist re-run at the end (search flow, selection panel, intro, URL roundtrip, lang toggle, light AND dark scheme via emulation, mobile viewport).
 
 ## Out of scope (v0.2)
 
