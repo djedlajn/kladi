@@ -13,8 +13,8 @@ cover them.
 
 ## Run
 
-    npm install
-    npm run dev        # http://localhost:5173
+    pnpm install
+    pnpm dev           # http://localhost:5173
 
 ## Data
 
@@ -24,9 +24,10 @@ Venue counts are a lower bound — unmapped venues exist.
 
 Refresh with:
 
-    npm run fetch-data
+    pnpm fetch-data
 
 ## Test / build
 
-    npm test
-    npm run build
+    pnpm test
+    pnpm build
+    pnpm run deploy    # build + wrangler deploy to Cloudflare Workers
